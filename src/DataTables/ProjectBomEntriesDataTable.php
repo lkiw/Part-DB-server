@@ -97,6 +97,12 @@ class ProjectBomEntriesDataTable implements DataTableTypeInterface
                     return $tmp;
                 },
             ])
+            ->add('part_id', TextColumn::class, [
+                'label' => 'Part-ID',
+                'render' => function ($value, ProjectBOMEntry $context) {
+                    return $context->getPart()?->getId() ?? '';
+                },
+            ])
             ->add('ipn', TextColumn::class, [
                 'label' => $this->translator->trans('part.table.ipn'),
                 'orderField' => 'NATSORT(part.ipn)',
