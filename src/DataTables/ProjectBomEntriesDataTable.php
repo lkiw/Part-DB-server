@@ -62,7 +62,7 @@ class ProjectBomEntriesDataTable implements DataTableTypeInterface
             ])
 
             ->add('id', TextColumn::class, [
-                'label' => $this->translator->trans('part.table.id'),
+                'label' => 'BOM-ID',
                 'visible' => false,
             ])
 
@@ -97,14 +97,8 @@ class ProjectBomEntriesDataTable implements DataTableTypeInterface
                     return $tmp;
                 },
             ])
-            ->add('part_id', TextColumn::class, [
-                'label' => 'Part-ID',
-                'render' => function ($value, ProjectBOMEntry $context) {
-                    return $context->getPart()?->getId() ?? '';
-                },
-            ])
             ->add('ipn', TextColumn::class, [
-                'label' => $this->translator->trans('part.table.ipn'),
+                'label' => 'BRC-ID',
                 'orderField' => 'NATSORT(part.ipn)',
                 'visible' => false,
                 'render' => function ($value, ProjectBOMEntry $context) {
@@ -112,6 +106,13 @@ class ProjectBomEntriesDataTable implements DataTableTypeInterface
                         return $context->getPart()->getIpn();
                     }
                 }
+            ])
+            ->add('partId', TextColumn::class, [
+                'label' => 'LIB-ID',
+                'orderField' => 'part.id',
+                'orderable' => true,
+                'className' => 'text-center', 
+                'render' => fn($value, ProjectBOMEntry $context) => $context->getPart()?->getId() ?? '',
             ])
             ->add('description', MarkdownColumn::class, [
                 'label' => $this->translator->trans('part.table.description'),
