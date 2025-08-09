@@ -65,6 +65,9 @@ class PartSearchFilter implements FilterInterface
     /** @var bool Use Internal Part number for searching */
     protected bool $ipn = true;
 
+    /** @var bool Use database Part ID for searching */
+    protected bool $id = false;
+
     public function __construct(
         /** @var string The string to query for */
         protected string $keyword
@@ -119,32 +122,40 @@ class PartSearchFilter implements FilterInterface
     public function apply(QueryBuilder $queryBuilder): void
     {
         $fields_to_search = $this->getFieldsToSearch();
+        $expressions = [];
 
-        //If we have nothing to search for, do nothing
-        if ($fields_to_search === [] || $this->keyword === '') {
-            return;
+        if ($fields_to_search !== [] && $this->keyword !== '') {
+            //Convert the fields to search to a list of expressions
+            $expressions = array_map(function (string $field): string {
+                if ($this->regex) {
+                    return sprintf('REGEXP(%s, :search_query) = TRUE', $field);
+                }
+
+                return sprintf('ILIKE(%s, :search_query) = TRUE', $field);
+            }, $fields_to_search);
+
+            //For regex, we pass the query as is, for like we add % to the start and end as wildcards
+            if ($this->regex) {
+                $queryBuilder->setParameter('search_query', $this->keyword);
+            } else {
+                $queryBuilder->setParameter('search_query', '%' . $this->keyword . '%');
+            }
         }
 
-        //Convert the fields to search to a list of expressions
-        $expressions = array_map(function (string $field): string {
-            if ($this->regex) {
-                return sprintf("REGEXP(%s, :search_query) = TRUE", $field);
-            }
+        if ($this->id && ctype_digit($this->keyword)) {
+            $expressions[] = 'part.id = :id_exact';
+            $queryBuilder->setParameter('id_exact', (int)$this->keyword);
+        }
 
-            return sprintf("ILIKE(%s, :search_query) = TRUE", $field);
-        }, $fields_to_search);
+        //If we have nothing to search for, do nothing
+        if ($expressions === []) {
+            return;
+        }
 
         //Add Or concatenation of the expressions to our query
         $queryBuilder->andWhere(
             $queryBuilder->expr()->orX(...$expressions)
         );
-
-        //For regex, we pass the query as is, for like we add % to the start and end as wildcards
-        if ($this->regex) {
-            $queryBuilder->setParameter('search_query', $this->keyword);
-        } else {
-            $queryBuilder->setParameter('search_query', '%' . $this->keyword . '%');
-        }
     }
 
     public function getKeyword(): string
@@ -254,6 +265,17 @@ class PartSearchFilter implements FilterInterface
     public function setIPN(bool $ipn): PartSearchFilter
     {
         $this->ipn = $ipn;
+        return $this;
+    }
+
+    public function isID(): bool
+    {
+        return $this->id;
+    }
+
+    public function setID(bool $id): PartSearchFilter
+    {
+        $this->id = $id;
         return $this;
     }
 

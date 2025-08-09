@@ -306,6 +306,7 @@ class PartListsController extends AbstractController
         $filter->setStorelocation($request->query->getBoolean('storelocation'));
         $filter->setComment($request->query->getBoolean('comment'));
         $filter->setIPN($request->query->getBoolean('ipn'));
+        $filter->setID($request->query->getBoolean('id'));
         $filter->setOrdernr($request->query->getBoolean('ordernr'));
         $filter->setSupplier($request->query->getBoolean('supplier'));
         $filter->setManufacturer($request->query->getBoolean('manufacturer'));
